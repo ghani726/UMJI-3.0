@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UMJI POS – Material You Advanced Offline System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                '50': 'var(--color-primary-50)',
+                '100': 'var(--color-primary-100)',
+                '200': 'var(--color-primary-200)',
+                '300': 'var(--color-primary-300)',
+                '400': 'var(--color-primary-400)',
+                '500': 'var(--color-primary-500)',
+                '600': 'var(--color-primary-600)',
+                '700': 'var(--color-primary-700)',
+                '800': 'var(--color-primary-800)',
+                '900': 'var(--color-primary-900)',
+                '950': 'var(--color-primary-950)',
+              },
+              secondary: {
+                '50': '#f7f7f9',
+                '100': '#ededf2',
+                '200': '#e0e0e8',
+                '300': '#c9c9d6',
+                '400': '#ababbb',
+                '500': '#8d8da1',
+                '600': '#717186',
+                '700': '#5f5f70',
+                '800': '#4d4d5a',
+                '900': '#3f3f4a',
+                '950': '#24242b',
+              },
+              surface: {
+                '50': '#fbf8ff',
+                '100': '#f8f5ff',
+                '200': '#f2eeff',
+                '300': '#e9e3ff',
+                '400': '#dcd4ff',
+                '500': '#ccbfff',
+                '600': '#b9a5ff',
+                '700': '#a387ff',
+                '800': '#8762ff',
+                '900': '#6633ff',
+                '950': '#3a00e5',
+              },
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideInUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
+            },
+            animation: {
+              fadeIn: 'fadeIn 0.3s ease-in-out',
+              slideInUp: 'slideInUp 0.3s ease-out'
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --color-primary-50: #f2f0ff;
+        --color-primary-100: #e5e0ff;
+        --color-primary-200: #d1c8ff;
+        --color-primary-300: #b1a4ff;
+        --color-primary-400: #8f7cff;
+        --color-primary-500: #7152ff;
+        --color-primary-600: #5d2bff;
+        --color-primary-700: #4a12f3;
+        --color-primary-800: #3e0bd9;
+        --color-primary-900: #3309b3;
+        --color-primary-950: #1e058a;
+      }
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #print-area, #print-area * {
+          visibility: visible;
+        }
+        #print-area {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "uuid": "https://aistudiocdn.com/uuid@^13.0.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0",
+    "react-hot-toast": "https://aistudiocdn.com/react-hot-toast@^2.6.0",
+    "dexie": "https://aistudiocdn.com/dexie@^4.2.1",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.546.0",
+    "dexie-react-hooks": "https://aistudiocdn.com/dexie-react-hooks@^4.2.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "jspdf-autotable": "https://aistudiocdn.com/jspdf-autotable@^3.8.2",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "jsbarcode": "https://aistudiocdn.com/jsbarcode@^3.11.6"
+  }
+}
+</script>
+</head>
+  <body class="bg-secondary-100 dark:bg-secondary-950">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
