@@ -85,6 +85,7 @@ export interface StoreInfo {
   receiptHeaderColor?: string;
   invoiceCounter: number;
   defaultMargin?: number;
+  defaultLowStockThreshold?: number;
   receiptLayout?: ReceiptLayout;
   // NEW REPORT SETTINGS
   reportPaperSize: 'A4' | 'A5' | 'Letter';

@@ -588,8 +588,13 @@ interface ProductFormModalProps {
 
 const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onClose, suppliers, brands }) => {
     const { hasPermission } = usePermissions();
+    const { storeInfo } = useAppContext();
     const [formData, setFormData] = useState<Omit<Product, 'id' | 'variantAttributes'>>({
-        name: '', categoryId: undefined, brandId: undefined, lowStockThreshold: 10, options: [],
+        name: '', 
+        categoryId: undefined, 
+        brandId: undefined, 
+        lowStockThreshold: product?.lowStockThreshold ?? storeInfo?.defaultLowStockThreshold ?? 10, 
+        options: [],
         variants: [{ id: uuidv4(), attributes: {}, stock: 0, costPrice: 0, sellingPrice: 0 }]
     });
     const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());

@@ -152,6 +152,7 @@ const RegisterPage: React.FC = () => {
                     theme: setupOptions.enableDarkMode ? 'dark' : 'light',
                     accentColor: '#5d2bff',
                     invoiceCounter: 1,
+                    defaultLowStockThreshold: 10,
                     receiptPageSize: 'thermal_80mm',
                     receiptHeaderColor: '#5d2bff',
                     reportPaperSize: 'A4',

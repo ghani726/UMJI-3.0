@@ -275,6 +275,14 @@ export class UmjiPOSDatabase extends Dexie {
             delete expense.type;
         });
     });
+
+    (this as any).version(22).upgrade(async (tx: any) => {
+        await tx.table('storeInfo').toCollection().modify((store: StoreInfo) => {
+            if (store.defaultLowStockThreshold === undefined) {
+                store.defaultLowStockThreshold = 10;
+            }
+        });
+    });
   }
 }
 

@@ -1106,9 +1106,15 @@ const SettingsPage: React.FC = () => {
                             <input name="email" type="email" value={formData.email || ''} onChange={handleChange} placeholder="Email" className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg" />
                             <input name="phone" type="tel" value={formData.phone || ''} onChange={handleChange} placeholder="Phone" className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg" />
                             <textarea name="address" value={formData.address || ''} onChange={handleChange} placeholder="Store Address" className="md:col-span-2 p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg" rows={2}/>
-                            <div className="md:col-span-2 flex items-center gap-4">
-                                <label htmlFor="currency" className="font-medium">Currency Symbol:</label>
-                                <input id="currency" name="currency" value={formData.currency || ''} onChange={handleChange} className="p-3 w-20 bg-secondary-100 dark:bg-secondary-800 rounded-lg" />
+                            <div className="md:col-span-2 flex items-center gap-4 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                    <label htmlFor="currency" className="font-medium">Currency Symbol:</label>
+                                    <input id="currency" name="currency" value={formData.currency || ''} onChange={handleChange} className="p-3 w-20 bg-secondary-100 dark:bg-secondary-800 rounded-lg" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <label htmlFor="defaultLowStockThreshold" className="font-medium">Default Low Stock Threshold:</label>
+                                    <input id="defaultLowStockThreshold" name="defaultLowStockThreshold" type="number" value={formData.defaultLowStockThreshold ?? ''} onChange={handleChange} className="p-3 w-24 bg-secondary-100 dark:bg-secondary-800 rounded-lg" />
+                                </div>
                             </div>
                         </div>
                     </SettingsCard>

@@ -212,7 +212,7 @@ const ReportsPage: React.FC = () => {
             if (!data) return;
             onDataReady({
                 // FIX: Cast properties to 'number' before calling .toFixed() to prevent 'unknown' type errors from useLiveQuery.
-                summaryCards: [ { title: "Total Sales", value: `${currency}${(data.totalRevenue as number).toFixed(2)}`, icon: TrendingUp }, { title: "Net Profit", value: `${currency}${(data.netProfit as number).toFixed(2)}`, icon: BarChart2 }, { title: "Products Sold", value: (data.totalUnitsSold as number).toString(), icon: Package }, { title: "Avg. Profit Margin", value: `${(data.avgMargin as number).toFixed(2)}%`, icon: PieChartIcon } ],
+                summaryCards: [ { title: "Total Sales", value: `${currency}${Number(data.totalRevenue).toFixed(2)}`, icon: TrendingUp }, { title: "Net Profit", value: `${currency}${Number(data.netProfit).toFixed(2)}`, icon: BarChart2 }, { title: "Products Sold", value: Number(data.totalUnitsSold).toString(), icon: Package }, { title: "Avg. Profit Margin", value: `${Number(data.avgMargin).toFixed(2)}%`, icon: PieChartIcon } ],
                 tableHeaders: ['Invoice #', 'Date', 'Customer', 'Items', 'Total'],
                 tableData: data.sales.map(s => ({ invoice: `#${s.invoiceNumber}`, date: format(s.timestamp, 'PPp'), customer: s.customerName || 'N/A', items: s.items.reduce((sum, i) => sum + Math.abs(i.quantity), 0), total: `${currency}${s.totalAmount.toFixed(2)}` })),
                 chartData: Object.entries(data.salesByRootCategory).map(([name, value]) => ({ name, value })),
