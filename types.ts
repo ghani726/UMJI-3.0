@@ -306,9 +306,14 @@ export interface PurchaseItem {
     costPerItem: number;
 }
 
+export interface ExpenseCategory {
+  id?: number;
+  name: string;
+}
+
 export interface Expense {
     id?: number;
-    type: string;
+    categoryId: number;
     amount: number;
     date: Date;
     notes?: string;

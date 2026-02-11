@@ -182,14 +182,14 @@ const DashboardPage: React.FC = () => {
         ]);
 
         const productCategoryMap = new Map(products.map(p => [p.id!, p.categoryId]));
-        const categoryNameMap = new Map(categories.map(c => [c.id!, c.name]));
+        const categoryNameMap = categories ? new Map(categories.map(c => [c.id!, c.name])) : new Map();
         
         const salesByCategory: Record<string, number> = {};
         for (const sale of sales) {
             for (const item of sale.items) {
                 const categoryId = productCategoryMap.get(item.productId);
                 // FIX: Type 'unknown' cannot be used as an index type. Resolved by ensuring categoryName is always a string and correctly handling uncategorized items.
-                const categoryName = (categoryId !== undefined ? categoryNameMap.get(categoryId) : undefined) || 'Uncategorized';
+                const categoryName: string = (categoryId !== undefined && categoryNameMap.get(categoryId)) || 'Uncategorized';
                 salesByCategory[categoryName] = (salesByCategory[categoryName] || 0) + item.totalPrice;
             }
         }

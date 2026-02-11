@@ -1,6 +1,7 @@
 
+
 import Dexie, { type Table } from 'dexie';
-import type { StoreInfo, User, Product, Sale, Supplier, Purchase, Expense, ActivityLog, HeldSale, ProductCategory, Customer, Role, Promotion, Voucher, Permission, ReportPreset, StaffCommission, StaffPayment, Shift, ShiftEvent, Brand } from '../types';
+import type { StoreInfo, User, Product, Sale, Supplier, Purchase, Expense, ActivityLog, HeldSale, ProductCategory, Customer, Role, Promotion, Voucher, Permission, ReportPreset, StaffCommission, StaffPayment, Shift, ShiftEvent, Brand, ExpenseCategory } from '../types';
 import { ALL_PERMISSIONS, DEFAULT_STAFF_PERMISSIONS, DEFAULT_PAYMENT_METHODS } from '../types';
 
 export class UmjiPOSDatabase extends Dexie {
@@ -24,6 +25,7 @@ export class UmjiPOSDatabase extends Dexie {
   shifts!: Table<Shift>;
   shiftEvents!: Table<ShiftEvent>;
   brands!: Table<Brand>;
+  expenseCategories!: Table<ExpenseCategory>;
 
 
   constructor() {
@@ -234,6 +236,45 @@ export class UmjiPOSDatabase extends Dexie {
         await tx.table('products').put(product);
       }
     });
+
+    (this as any).version(21).stores({
+      expenseCategories: '++id, &name',
+      expenses: '++id, date, categoryId, shiftId',
+    }).upgrade(async (tx: any) => {
+        const expenses = await tx.table('expenses').toArray();
+        const uniqueTypes = [...new Set(expenses.map(e => e.type).filter(Boolean))];
+        const typeToIdMap = new Map<string, number>();
+
+        const defaultCategories = ['Rent', 'Salaries', 'Utilities', 'Supplies', 'Marketing', 'Uncategorized'];
+        for (const catName of defaultCategories) {
+            const exists = await tx.table('expenseCategories').where('name').equalsIgnoreCase(catName).first();
+            if (!exists) {
+                const newId = await tx.table('expenseCategories').add({ name: catName });
+                typeToIdMap.set(catName, newId);
+            } else {
+                typeToIdMap.set(catName, exists.id);
+            }
+        }
+        
+        for (const type of uniqueTypes) {
+            if (type && typeof type === 'string' && !typeToIdMap.has(type)) {
+                const newId = await tx.table('expenseCategories').add({ name: type });
+                typeToIdMap.set(type, newId);
+            }
+        }
+
+        const uncategorizedId = typeToIdMap.get('Uncategorized');
+
+        await tx.table('expenses').toCollection().modify((expense: any) => {
+            const categoryId = typeToIdMap.get(expense.type);
+            if (categoryId) {
+                expense.categoryId = categoryId;
+            } else {
+                expense.categoryId = uncategorizedId;
+            }
+            delete expense.type;
+        });
+    });
   }
 }
 
@@ -267,6 +308,18 @@ export async function seedCoreData() {
     if (categoryCount === 0) {
         await db.productCategories.bulkAdd([
             { name: 'General', parentId: null },
+        ]);
+    }
+
+    const expenseCategoryCount = await db.expenseCategories.count();
+    if (expenseCategoryCount === 0) {
+        await db.expenseCategories.bulkAdd([
+            { name: 'Rent' },
+            { name: 'Salaries' },
+            { name: 'Utilities' },
+            { name: 'Supplies' },
+            { name: 'Marketing' },
+            { name: 'Uncategorized' },
         ]);
     }
 }
@@ -347,9 +400,14 @@ export const seedInitialData = async () => {
             { name: 'Footwear Solutions', phone: '555-0102', email: 'sales@footwearsolutions.com', contactPerson: 'Jane Smith' },
         ]);
 
-        await db.expenses.bulkAdd([
-            { type: 'Rent', amount: 1500, date: new Date(new Date().setDate(1)) },
-            { type: 'Utilities', amount: 350, date: new Date(new Date().setDate(5)) },
-        ]);
+        const rentCat = await db.expenseCategories.where('name').equals('Rent').first();
+        const utilsCat = await db.expenseCategories.where('name').equals('Utilities').first();
+
+        if (rentCat && utilsCat) {
+            await db.expenses.bulkAdd([
+                { categoryId: rentCat.id!, amount: 1500, date: new Date(new Date().setDate(1)) },
+                { categoryId: utilsCat.id!, amount: 350, date: new Date(new Date().setDate(5)) },
+            ]);
+        }
     }
 };

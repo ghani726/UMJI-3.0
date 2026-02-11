@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
-import type { StoreInfo, ReceiptLayout, ProductCategory, Role, User, Permission, Sale, ReportPreset, ReportLayoutElement, PaymentMethod, Brand } from '../types';
+import type { StoreInfo, ReceiptLayout, ProductCategory, Role, User, Permission, Sale, ReportPreset, ReportLayoutElement, PaymentMethod, Brand, ExpenseCategory } from '../types';
 import { ALL_PERMISSIONS } from '../types';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -154,6 +154,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, level, onEdit, on
 const CategoryManager: React.FC = () => {
     const [modalState, setModalState] = useState<{ isOpen: boolean; editing?: ProductCategory | null; parentId?: number | null }>({ isOpen: false });
     const categories = useLiveQuery(() => db.productCategories.toArray());
+    const { showConfirmation } = useAppContext();
 
     const categoryTree = useMemo(() => {
         if (!categories) return [];
@@ -204,10 +205,14 @@ const CategoryManager: React.FC = () => {
             return;
         }
 
-        if (window.confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
-            await db.productCategories.delete(category.id);
-            toast.success("Category deleted.");
-        }
+        showConfirmation(
+            'Delete Category',
+            `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`,
+            async () => {
+                await db.productCategories.delete(category.id!);
+                toast.success("Category deleted.");
+            }
+        );
     };
     
     return (
@@ -266,6 +271,96 @@ const CategoryFormModal: React.FC<{ category?: ProductCategory | null; parentId?
             <form onSubmit={handleSubmit} className="bg-secondary-50 dark:bg-secondary-900 rounded-2xl p-6 w-full max-w-md animate-slideInUp">
                 <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">{category ? 'Edit' : 'New'} Category</h2><button type="button" onClick={onClose}><X/></button></div>
                 {parentId && <p className="text-sm text-secondary-500 mb-2">Adding sub-category to: <strong>{parentCategory?.name}</strong></p>}
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Category Name" required autoFocus className="w-full p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg mb-4"/>
+                <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-secondary-200 dark:border-secondary-800"><button type="button" onClick={onClose} className="px-4 py-2 bg-secondary-200 dark:bg-secondary-700 rounded-lg">Cancel</button><button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg">Save Category</button></div>
+            </form>
+        </div>
+    );
+};
+
+// --- Expense Category Management ---
+const ExpenseCategoryManager: React.FC = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
+    const categories = useLiveQuery(() => db.expenseCategories.orderBy('name').toArray());
+    const { showConfirmation } = useAppContext();
+
+    const openModal = (category: ExpenseCategory | null = null) => {
+        setEditingCategory(category);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = async (category: ExpenseCategory) => {
+        if (!category.id) return;
+
+        const expenseCount = await db.expenses.where({ categoryId: category.id }).count();
+        if (expenseCount > 0) {
+            toast.error(`Cannot delete category "${category.name}" as it is used by ${expenseCount} expense(s).`);
+            return;
+        }
+
+        showConfirmation(
+            'Delete Expense Category',
+            `Are you sure you want to delete the category "${category.name}"?`,
+            async () => {
+                await db.expenseCategories.delete(category.id!);
+                toast.success("Category deleted.");
+            }
+        );
+    };
+
+    return (
+        <SettingsCard title="Expense Categories">
+            <div className="flex justify-between items-center mb-4">
+                <p className="text-sm text-secondary-500">Add, edit, or remove expense categories.</p>
+                <button onClick={() => openModal()} className="flex items-center gap-2 px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                    <Plus size={16} /> New Category
+                </button>
+            </div>
+            <div className="space-y-2 max-h-96 overflow-y-auto bg-secondary-100 dark:bg-secondary-800 p-2 rounded-lg">
+                {categories?.map(cat => (
+                    <div key={cat.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-200 dark:hover:bg-secondary-800/50">
+                        <span className="font-medium">{cat.name}</span>
+                        <div className="flex gap-1">
+                            <button onClick={() => openModal(cat)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full" title="Edit"><Edit size={16} /></button>
+                            <button onClick={() => handleDelete(cat)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="Delete"><Trash2 size={16} /></button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {isModalOpen && <ExpenseCategoryFormModal category={editingCategory} onClose={() => setIsModalOpen(false)} />}
+        </SettingsCard>
+    );
+};
+
+const ExpenseCategoryFormModal: React.FC<{ category: ExpenseCategory | null; onClose: () => void; }> = ({ category, onClose }) => {
+    const [name, setName] = useState(category?.name || '');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) {
+            toast.error("Category name cannot be empty.");
+            return;
+        }
+        try {
+            if (category?.id) {
+                await db.expenseCategories.update(category.id, { name });
+                toast.success("Category updated.");
+            } else {
+                await db.expenseCategories.add({ name });
+                toast.success("Category created.");
+            }
+            onClose();
+        } catch (error) {
+            toast.error("A category with this name already exists.");
+            console.error(error);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <form onSubmit={handleSubmit} className="bg-secondary-50 dark:bg-secondary-900 rounded-2xl p-6 w-full max-w-md animate-slideInUp">
+                <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">{category ? 'Edit' : 'New'} Category</h2><button type="button" onClick={onClose}><X/></button></div>
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="Category Name" required autoFocus className="w-full p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg mb-4"/>
                 <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-secondary-200 dark:border-secondary-800"><button type="button" onClick={onClose} className="px-4 py-2 bg-secondary-200 dark:bg-secondary-700 rounded-lg">Cancel</button><button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded-lg">Save Category</button></div>
             </form>
@@ -990,7 +1085,8 @@ const SettingsPage: React.FC = () => {
                     <button onClick={() => setActiveTab('store')} className={`${activeTab === 'store' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Store</button>
                     <button onClick={() => setActiveTab('payment')} className={`${activeTab === 'payment' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Payment Methods</button>
                     <button onClick={() => setActiveTab('brands')} className={`${activeTab === 'brands' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Brands</button>
-                    <button onClick={() => setActiveTab('categories')} className={`${activeTab === 'categories' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Categories</button>
+                    <button onClick={() => setActiveTab('categories')} className={`${activeTab === 'categories' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Product Categories</button>
+                    <button onClick={() => setActiveTab('expense_categories')} className={`${activeTab === 'expense_categories' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Expense Categories</button>
                     {(hasPermission('ManageUsers') || hasPermission('ManageRoles')) &&
                         <button onClick={() => setActiveTab('users')} className={`${activeTab === 'users' ? 'border-primary-500 text-primary-600' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Users & Roles</button>
                     }
@@ -1028,6 +1124,8 @@ const SettingsPage: React.FC = () => {
                 {activeTab === 'brands' && <BrandManager />}
 
                 {activeTab === 'categories' && <CategoryManager />}
+
+                {activeTab === 'expense_categories' && <ExpenseCategoryManager />}
                 
                 {activeTab === 'users' && <div className="space-y-8">
                     {hasPermission('ManageUsers') && <UserManager />}

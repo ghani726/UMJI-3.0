@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet, useLocation, Link } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
